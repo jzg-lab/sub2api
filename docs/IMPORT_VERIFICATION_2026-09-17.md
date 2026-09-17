@@ -106,11 +106,23 @@ Follow-up verification:
   outside the repository and was not started. This supersedes the initial
   transfer's missing-Go limitation, but not its live-deployment limitations.
 
-Before publication, the outgoing branch must be rebuilt as a sanitized root
-commit so none of the rejected secret-bearing commits are ancestors. No remote
-history is rewritten; the target repository was empty. Original local delivery
-files remain untouched and are not a source for automatic deployments.
+The outgoing branch was rebuilt as a sanitized root commit. An exact-match scan
+against the four original credential literals verified they are absent from
+the outgoing commit, and neither rejected commit is an ancestor. Generic secret
+pattern hits remaining in log-redaction tests and deployment examples were
+reviewed as dummy placeholders, not the rejected credential values.
 
-After resolving this, publish without force-pushing and verify that the
-remote commit equals the local commit. The initial import must not be
-represented as a tested production release.
+Normal push succeeded on 2026-09-17 without a push-protection bypass or force
+push. GitHub's default branch and `refs/heads/main` were read back and verified
+as `45c065cd8c535f73527f1aff98e372d6ad8c91e0`, matching the local source baseline.
+This publication note is a subsequent documentation-only commit.
+
+Final combined OAuth regression passed for both provider packages and the
+service package. The working tree was clean at source publication. No remote
+history was overwritten; the target repository was empty. Original local
+delivery files remain untouched and are not an automatic deployment source.
+
+Production was not deployed. Configure the private OAuth pairs and validate
+existing-account refresh behavior before deploying. A published source baseline
+must not be represented as a fully tested production release; GitHub CI results
+and real production integrations have not been independently verified here.
