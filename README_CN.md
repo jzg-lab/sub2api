@@ -30,7 +30,8 @@
 > **部署注意**：下文的「脚本安装」和「Docker Compose 一键部署」会下载**上游官方**预编译的二进制或镜像，**不包含本 fork 的改动**。要使用本 fork，请克隆本仓库后从源码构建：
 >
 > ```bash
-> cd deploy
+> git clone https://github.com/jzg-lab/sub2api.git
+> cd sub2api/deploy
 > cp .env.example .env   # 至少设置 POSTGRES_PASSWORD
 > docker compose -f docker-compose.dev.yml up -d --build
 > ```

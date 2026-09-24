@@ -44,14 +44,16 @@ SET extra = COALESCE(extra, '{}'::jsonb) || '{"openai_basispoints_mode": false}'
 WHERE id = <账号ID>;
 ```
 
-Docker Compose 部署时可以这样执行：
+按 README 用 `deploy/docker-compose.dev.yml` 从源码部署时，可以这样执行：
 
 ```bash
-docker compose exec postgres psql -U sub2api -d sub2api -c \
+cd deploy
+docker compose -f docker-compose.dev.yml exec postgres psql -U sub2api -d sub2api -c \
   "UPDATE accounts SET extra = COALESCE(extra,'{}'::jsonb) || '{\"openai_basispoints_mode\": true}'::jsonb WHERE id = 1;"
+docker compose -f docker-compose.dev.yml restart sub2api
 ```
 
-修改后建议重启 sub2api 服务，避免账号缓存导致不生效。建议先只对一个账号开启，确认返回正常后再扩大范围。
+修改后需要重启 sub2api 服务，避免账号缓存导致不生效。建议先只对一个账号开启，确认返回正常后再扩大范围。
 
 ## 验证是否生效
 

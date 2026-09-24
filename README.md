@@ -30,7 +30,8 @@ See **[BASISPOINTS_MODE.md](BASISPOINTS_MODE.md)** (Chinese) for how to enable i
 > **Deployment note**: the "script install" and "Docker Compose quick start" sections below download the **upstream** prebuilt binary or image, which does **not** include this fork's changes. To run this fork, clone this repository and build from source:
 >
 > ```bash
-> cd deploy
+> git clone https://github.com/jzg-lab/sub2api.git
+> cd sub2api/deploy
 > cp .env.example .env   # set at least POSTGRES_PASSWORD
 > docker compose -f docker-compose.dev.yml up -d --build
 > ```
