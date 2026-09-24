@@ -45,6 +45,11 @@ func (r *defaultOpenAIWSProtocolResolver) Resolve(account *Account) OpenAIWSProt
 	if account.IsOpenAIWSForceHTTPEnabled() {
 		return openAIWSHTTPDecision("account_force_http")
 	}
+	if account.IsOpenAIBasispointsModeEnabled() {
+		// basispoints 出站只实现了 HTTP SSE 路径（buildUpstreamRequest 改写端点/头）；
+		// WS v1/v2 转发器仍指向 chatgpt.com codex，会绕开 basispoints 路由。强制 HTTP。
+		return openAIWSHTTPDecision("account_basispoints_mode")
+	}
 	if r == nil || r.cfg == nil {
 		return openAIWSHTTPDecision("config_missing")
 	}

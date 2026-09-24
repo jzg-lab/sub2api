@@ -29,6 +29,12 @@ import (
 const (
 	// ChatGPT internal API for OAuth accounts
 	chatgptCodexURL = "https://chatgpt.com/backend-api/codex/responses"
+	// openaiBasispointsURL 是 OpenAI 内部 basispoints Responses 端点。
+	// 账号开启 openai_basispoints_mode 时，OAuth 出站改走此端点：它以 chatgpt
+	// auth_mode 鉴权（复用 ChatGPT access token），不经 backend-api/codex 的降载
+	// 路由。仅接受 basispoints 身份头，不认 codex 私有头（originator/version/
+	// OpenAI-Beta），故出站需剥离 codex 头并改写 Host（见 applyOpenAIBasispointsHeaders）。
+	openaiBasispointsURL = "https://bps.openai.com/basispoints/api/responses"
 	// OpenAI Platform API for API Key accounts (fallback)
 	openaiPlatformAPIURL            = "https://api.openai.com/v1/responses"
 	openaiPlatformAPIInputTokensURL = "https://api.openai.com/v1/responses/input_tokens"

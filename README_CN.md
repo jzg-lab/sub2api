@@ -18,6 +18,24 @@
 
 </div>
 
+## 🔀 本 Fork 的改动
+
+本仓库 fork 自 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api)，在上游基础上新增：
+
+- **Basispoints 出站模式**（账号级开关 `extra.openai_basispoints_mode`，默认关闭）：开启后 OpenAI OAuth 账号的 `/v1/responses` 请求改走 `https://bps.openai.com/basispoints/api/responses`，使用 basispoints 身份头（`x-basispoints-auth-mode: chatgpt` 等）替代 Codex 身份头，并强制走 HTTP SSE。关闭时与上游行为完全一致。
+- 推理强度上限仍为 `xhigh`（无 `max`）；该端点未公开，存在违反 OpenAI 服务条款和封号风险。
+
+开启方法、行为对照、代码改动清单见 **[BASISPOINTS_MODE.md](BASISPOINTS_MODE.md)**。
+
+> **部署注意**：下文的「脚本安装」和「Docker Compose 一键部署」会下载**上游官方**预编译的二进制或镜像，**不包含本 fork 的改动**。要使用本 fork，请克隆本仓库后从源码构建：
+>
+> ```bash
+> cd deploy
+> cp .env.example .env   # 至少设置 POSTGRES_PASSWORD
+> docker compose -f docker-compose.dev.yml up -d --build
+> ```
+
+以下为上游原始文档。
 
 ## ⚠️ 重要提醒
 
