@@ -2275,6 +2275,23 @@ func (a *Account) IsOpenAIResponsesFlattenNamespacesEnabled() bool {
 	return ok && enabled
 }
 
+// IsOpenAIBasispointsModeEnabled 返回账号级 basispoints 出站开关。
+// 字段：accounts.extra.openai_basispoints_mode，缺省 false（走标准 codex 端点）。
+//
+// 开启后，OpenAI OAuth 账号的 /v1/responses 出站改打 bps.openai.com 的 basispoints
+// 端点，绕开 backend-api/codex 的降载路由；鉴权复用 ChatGPT access token（auth_mode=
+// chatgpt）。仅对 OpenAI OAuth 账号有效——API Key 走 platform，不受影响。
+//
+// 注意：basispoints 端点的 reasoning effort 上限与 codex 一致（最高 xhigh，无 max）；
+// 本开关只改变路由端点，不解锁更高推理档位。属未公开内部端点，存在 ToS/封号风险。
+func (a *Account) IsOpenAIBasispointsModeEnabled() bool {
+	if a == nil || !a.IsOpenAI() || a.Extra == nil {
+		return false
+	}
+	enabled, ok := a.Extra["openai_basispoints_mode"].(bool)
+	return ok && enabled
+}
+
 // IsOpenAIWSAllowStoreRecoveryEnabled 返回账号级 store 恢复开关。
 // 字段：accounts.extra.openai_ws_allow_store_recovery。
 func (a *Account) IsOpenAIWSAllowStoreRecoveryEnabled() bool {

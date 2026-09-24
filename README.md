@@ -1,4 +1,4 @@
-> **jzg-lab custom distribution:** This repository contains the supplied new-site source, not an unmodified upstream checkout. Start with [repository maintenance and source builds](docs/REPOSITORY_MAINTENANCE.md). The upstream install commands and images below are reference material; they do not deploy this custom version.
+> **jzg-lab custom distribution:** This repository contains the supplied new-site source, not an unmodified upstream checkout. Start with [repository maintenance and source builds](docs/REPOSITORY_MAINTENANCE.md). For the per-account OpenAI OAuth basispoints outbound switch, see [Basispoints mode](docs/BASISPOINTS_MODE.md) (Chinese). The upstream install commands and images below are reference material; they do not deploy this custom version.
 
 <div align="center">
 

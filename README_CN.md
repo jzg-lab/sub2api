@@ -1,4 +1,4 @@
-> **jzg-lab 定制版本：** 本仓库保存用户提供的“sub2新站”源码，不是原版上游代码。维护和源码构建请先阅读 [本仓库维护说明](docs/REPOSITORY_MAINTENANCE.md)。下文保留的原作者安装命令及镜像仅供参考，不能用于部署本定制版本。
+> **jzg-lab 定制版本：** 本仓库保存用户提供的“sub2新站”源码，不是原版上游代码。维护和源码构建请先阅读 [本仓库维护说明](docs/REPOSITORY_MAINTENANCE.md)。OpenAI OAuth 的 basispoints 出站开关见 [Basispoints 出站模式](docs/BASISPOINTS_MODE.md)。下文保留的原作者安装命令及镜像仅供参考，不能用于部署本定制版本。
 
 <div align="center">
 

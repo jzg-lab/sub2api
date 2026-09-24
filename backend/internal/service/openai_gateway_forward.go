@@ -1348,15 +1348,28 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	if err := validateMode1StagedRequest(c, account, body); err != nil {
 		return nil, err
 	}
+	// basispoints 模式：OAuth 账号出站改走 bps.openai.com 的 basispoints 端点，绕开
+	// backend-api/codex 的降载路由。此模式下不发送 codex 私有身份头（originator/
+	// version/OpenAI-Beta/fingerprint 等），改用 basispoints 身份头，故 codexProtocol
+	// 收窄为「走 codex 协议且未开 basispoints」，用于门控所有 codex-only 头逻辑。
+	basispoints := account.UsesOpenAICodexProtocol() && account.IsOpenAIBasispointsModeEnabled()
+	codexProtocol := account.UsesOpenAICodexProtocol() && !basispoints
+
 	// Determine target URL based on account type
 	var targetURL string
 	switch account.Type {
 	case AccountTypeOAuth:
 		// OAuth accounts use ChatGPT internal API
 		targetURL = chatgptCodexURL
+		if basispoints {
+			targetURL = openaiBasispointsURL
+		}
 	case AccountTypeSetupToken:
 		if account.IsOpenAIOAuthLike() {
 			targetURL = chatgptCodexURL
+			if basispoints {
+				targetURL = openaiBasispointsURL
+			}
 		} else {
 			targetURL = openaiPlatformAPIURL
 		}
@@ -1403,7 +1416,14 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	}
 
 	// Set headers specific to OAuth accounts (ChatGPT internal API)
-	if account.UsesOpenAICodexProtocol() {
+	if basispoints {
+		// basispoints 端点：Host 指向 bps.openai.com，鉴权沿用上面的 Bearer，
+		// 另需 chatgpt-account-id / x-openai-account-id / x-basispoints-auth-mode。
+		req.Host = "bps.openai.com"
+		if err := applyOpenAIBasispointsHeaders(ctx, s.accountRepo, req.Header, account); err != nil {
+			return nil, fmt.Errorf("resolve basispoints account headers: %w", err)
+		}
+	} else if account.UsesOpenAICodexProtocol() {
 		// Required: set Host for ChatGPT API (must use req.Host, not Header.Set)
 		req.Host = "chatgpt.com"
 		if err := resolveAndSetOpenAIChatGPTAccountHeaders(ctx, s.accountRepo, req.Header, account); err != nil {
@@ -1423,7 +1443,20 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	// 客户端回带的 x-codex-turn-state 若已知由其他账号铸造（failover 换号），
 	// 剥离后再出站——异账号 blob 与本账号的（指纹收敛后）出站身份自相矛盾。
 	s.guardOpenAICodexTurnStateEcho(c, account, req.Header)
-	if account.UsesOpenAICodexProtocol() {
+	if basispoints {
+		// basispoints 端点不认 codex 私有身份头：剥离白名单透传进来的 codex/会话头，
+		// 只保留 basispoints 身份头（已在上面 applyOpenAIBasispointsHeaders 设置）。
+		for _, h := range []string{
+			"originator", "OpenAI-Beta", "version",
+			"conversation_id", "session_id",
+			"x-codex-beta-features", "x-codex-installation-id",
+			"x-codex-turn-state", "x-codex-turn-metadata", "x-codex-window-id",
+		} {
+			req.Header.Del(h)
+		}
+		req.Header.Set("accept", "text/event-stream")
+	}
+	if codexProtocol {
 		compatMessagesBridge := isOpenAICompatMessagesBridgeContext(c) || isOpenAICompatMessagesBridgeBody(body)
 		// 清除客户端透传的 session 头，后续用隔离后的值重新设置，防止跨用户会话碰撞。
 		clientConversationID := strings.TrimSpace(req.Header.Get("conversation_id"))
@@ -1468,20 +1501,21 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 
 	// 若开启 ForceCodexCLI，则强制将上游 User-Agent 伪装为规范 Codex 身份。
 	// 用于网关未透传/改写 User-Agent 时，仍能命中 Codex 侧识别逻辑。
-	if s.cfg != nil && s.cfg.Gateway.ForceCodexCLI {
+	// basispoints 端点不识别 codex 身份，跳过以免注入无关/矛盾的 UA。
+	if !basispoints && s.cfg != nil && s.cfg.Gateway.ForceCodexCLI {
 		req.Header.Set("user-agent", CodexCanonicalUserAgent())
 	}
 
-	// 账号 namespace 不改变客户端身份基数，但确保 scheduler failover 后不会把
-	// 同一组 Codex IDs 发送给另一份 OAuth 凭据。可选指纹收敛随后仍可覆盖这些值。
-	applyCodexAccountIdentityHeaders(req.Header, codexAccountIdentitySource(c, account), getAPIKeyIDFromContext(c))
+	if codexProtocol {
+		// 账号 namespace 不改变客户端身份基数，但确保 scheduler failover 后不会把
+		// 同一组 Codex IDs 发送给另一份 OAuth 凭据。可选指纹收敛随后仍可覆盖这些值。
+		applyCodexAccountIdentityHeaders(req.Header, codexAccountIdentitySource(c, account), getAPIKeyIDFromContext(c))
 
-	// 指纹收敛：使用 Forward() 中预计算的收敛 ID 改写出站头，与请求体使用同一份 IDs。
-	applyStagedCodexFingerprintHeaders(c, account, req.Header)
+		// 指纹收敛：使用 Forward() 中预计算的收敛 ID 改写出站头，与请求体使用同一份 IDs。
+		applyStagedCodexFingerprintHeaders(c, account, req.Header)
 
-	// 终态收口：强制统一 OAuth 出站身份（User-Agent / originator / version 同源自洽）。
-	// 客户端自报身份不参与构造，浏览器型 UA 也因此不会再到达上游（原浏览器 UA 兜底已被吸收）。
-	if account.UsesOpenAICodexProtocol() {
+		// 终态收口：强制统一 OAuth 出站身份（User-Agent / originator / version 同源自洽）。
+		// 客户端自报身份不参与构造，浏览器型 UA 也因此不会再到达上游（原浏览器 UA 兜底已被吸收）。
 		enforceCodexIdentityHeadersWithUA(req.Header, s.codexIdentityOverrideUA(account))
 	}
 
@@ -1493,10 +1527,12 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	// 账号级请求头覆写（仅 openai api_key 账号启用时生效；OAuth 路径 no-op）
 	account.ApplyHeaderOverrides(req.Header)
 	applyOpenCodeSessionHeader(c, account, targetURL, req.Header)
-	// x-codex-beta-features：按真实 Codex 的会话级行为补注（在账号级覆写之后，
-	// 保证不被覆盖丢失）。
-	applyOpenAICodexBetaFeatures(c, account, req.Header)
-	setOpenAICodexRoutingHintFromBody(req.Header, account, body)
+	if codexProtocol {
+		// x-codex-beta-features：按真实 Codex 的会话级行为补注（在账号级覆写之后，
+		// 保证不被覆盖丢失）。basispoints 端点不消费这些 codex 私有头，跳过。
+		applyOpenAICodexBetaFeatures(c, account, req.Header)
+		setOpenAICodexRoutingHintFromBody(req.Header, account, body)
+	}
 	logOpenAIRoutingDiagnosticsFromBody(ctx, account, "http", req.Header, body, "not_applicable")
 
 	return req, nil
