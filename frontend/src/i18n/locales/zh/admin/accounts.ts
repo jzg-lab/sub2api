@@ -740,6 +740,9 @@ export default {
         flattenNamespaces: '摊平 Codex namespace 工具（兼容）',
         flattenNamespacesDesc:
           '默认关闭：/responses 上的 namespace 工具声明原样转发，这正是 ChatGPT Codex 后端期望的形态。仅当该 OAuth 账号指向不认识 namespace 的兼容上游时才开启——摊平会把工具改名为 namespace__tool，使按 functions.<命名空间>.<工具> 寻址的模型（如 gpt-5.6 多智能体）无法调用。压缩（compact）请求不受该开关影响，始终摊平。',
+        basispointsMode: 'Basispoints 出站模式',
+        basispointsModeDesc:
+          '默认关闭。开启后该账号的 /v1/responses 请求改发到 bps.openai.com 的 basispoints 端点（而不是 chatgpt.com Codex 端点），不发送 Codex 身份头，并强制走 HTTP。推理强度上限仍为 xhigh（无 max）。该端点未公开，存在违反 OpenAI 条款和封号风险；如遇异常请关闭回滚。',
         longContextBilling: 'API 长上下文计费',
         longContextBillingDesc: '默认关闭。仅当该账号的上游会按模型阈值收取 OpenAI API 长上下文费率时开启。',
         responsesWebsocketsV2: 'Responses WebSocket v2',

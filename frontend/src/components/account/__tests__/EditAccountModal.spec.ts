@@ -1478,6 +1478,47 @@ describe('EditAccountModal', () => {
     expect(updateAccountMock.mock.calls[0]?.[1]?.extra).not.toHaveProperty('codex_image_generation_bridge')
   })
 
+  it('OAuth account can enable basispoints mode', async () => {
+    const account = buildOpenAIOAuthParentAccount()
+    updateAccountMock.mockReset().mockResolvedValue(account)
+    checkMixedChannelRiskMock.mockReset().mockResolvedValue({ has_risk: false })
+
+    const wrapper = mountModal(account)
+    const toggle = wrapper.get('[data-testid="edit-openai-basispoints-mode-toggle"]')
+    expect(toggle.classes()).not.toContain('bg-primary-600')
+    await toggle.trigger('click')
+    await wrapper.get('form#edit-account-form').trigger('submit.prevent')
+
+    expect(updateAccountMock).toHaveBeenCalledTimes(1)
+    expect(updateAccountMock.mock.calls[0]?.[1]?.extra?.openai_basispoints_mode).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('rehydrates basispoints mode and removes it when disabled', async () => {
+    const account = {
+      ...buildOpenAISetupTokenAccount(),
+      extra: { ...buildOpenAISetupTokenAccount().extra, openai_basispoints_mode: true }
+    }
+    updateAccountMock.mockReset().mockResolvedValue(account)
+    checkMixedChannelRiskMock.mockReset().mockResolvedValue({ has_risk: false })
+
+    const wrapper = mountModal(account)
+    const toggle = wrapper.get('[data-testid="edit-openai-basispoints-mode-toggle"]')
+    expect(toggle.classes()).toContain('bg-primary-600')
+    await toggle.trigger('click')
+    await wrapper.get('form#edit-account-form').trigger('submit.prevent')
+
+    expect(updateAccountMock).toHaveBeenCalledTimes(1)
+    expect(updateAccountMock.mock.calls[0]?.[1]?.extra).not.toHaveProperty('openai_basispoints_mode')
+    wrapper.unmount()
+  })
+
+  it('hides basispoints mode for API key accounts', () => {
+    const wrapper = mountModal(buildAccount())
+    expect(wrapper.find('[data-testid="edit-openai-basispoints-mode-toggle"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('setup-token account can select and submit OAuth WS mode', async () => {
     const account = buildOpenAISetupTokenAccount()
     updateAccountMock.mockReset()

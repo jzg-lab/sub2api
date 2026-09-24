@@ -30,7 +30,18 @@ API Key 账号不受影响。
 
 ## 开启方法
 
-后台编辑账号时 `extra` 会被整体替换，推荐直接在数据库中合并写入（PostgreSQL）：
+在管理后台操作即可，不需要命令行：
+
+1. 进入 **账号管理**，找到要开启的 OpenAI 账号（类型为 OAuth 或 Setup Token），点 **编辑**。
+2. 在编辑窗口中找到 **Basispoints 出站模式** 开关（位于"摊平 Codex namespace 工具"开关下方），打开它。
+3. 点 **保存**。保存后立即生效，不需要重启服务。
+
+关闭时同样在编辑窗口里把开关关掉并保存。API Key 账号不显示这个开关。
+
+建议先只对一个账号开启，确认返回正常后再扩大范围。
+
+<details>
+<summary>也可以直接改数据库（PostgreSQL）</summary>
 
 ```sql
 -- 开启
@@ -39,21 +50,12 @@ SET extra = COALESCE(extra, '{}'::jsonb) || '{"openai_basispoints_mode": true}':
 WHERE id = <账号ID>;
 
 -- 关闭
-UPDATE accounts
-SET extra = COALESCE(extra, '{}'::jsonb) || '{"openai_basispoints_mode": false}'::jsonb
-WHERE id = <账号ID>;
+UPDATE accounts SET extra = extra - 'openai_basispoints_mode' WHERE id = <账号ID>;
 ```
 
-按 README 用 `deploy/docker-compose.dev.yml` 从源码部署时，可以这样执行：
+直接改数据库不会通知调度缓存，改完需要重启 sub2api 服务才会生效。
 
-```bash
-cd deploy
-docker compose -f docker-compose.dev.yml exec postgres psql -U sub2api -d sub2api -c \
-  "UPDATE accounts SET extra = COALESCE(extra,'{}'::jsonb) || '{\"openai_basispoints_mode\": true}'::jsonb WHERE id = 1;"
-docker compose -f docker-compose.dev.yml restart sub2api
-```
-
-修改后需要重启 sub2api 服务，避免账号缓存导致不生效。建议先只对一个账号开启，确认返回正常后再扩大范围。
+</details>
 
 ## 验证是否生效
 
@@ -70,12 +72,18 @@ WebSocket 协议决策原因为 `account_basispoints_mode`。
 | `backend/internal/service/openai_gateway_forward.go` | `buildUpstreamRequest` 中按开关切换 URL / Host / 头，门控所有 codex 专用头 |
 | `backend/internal/service/openai_ws_protocol_resolver.go` | 开关开启时强制 HTTP |
 | `backend/internal/service/openai_basispoints_mode_test.go` | 新增单元测试 |
+| `frontend/src/components/account/EditAccountModal.vue` | 账号编辑窗口新增开关 |
+| `frontend/src/i18n/locales/{zh,en}/admin/accounts.ts` | 开关的中英文文案 |
+| `frontend/src/components/account/__tests__/EditAccountModal.spec.ts` | 开关的前端测试 |
 
 运行测试：
 
 ```bash
 cd backend
 go test ./internal/service/ -run Basispoints -v
+
+cd ../frontend
+pnpm exec vitest run src/components/account/__tests__/EditAccountModal.spec.ts
 ```
 
 ## 同步上游

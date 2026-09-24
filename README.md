@@ -22,7 +22,7 @@ English | [中文](README_CN.md) | [日本語](README_JA.md)
 
 This repository is a fork of [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) and adds:
 
-- **Basispoints outbound mode** (per-account switch `extra.openai_basispoints_mode`, off by default): when enabled, `/v1/responses` requests from OpenAI OAuth accounts go to `https://bps.openai.com/basispoints/api/responses` with basispoints identity headers (`x-basispoints-auth-mode: chatgpt`, etc.) instead of Codex identity headers, and are forced onto HTTP SSE. When disabled, behavior is identical to upstream.
+- **Basispoints outbound mode** (per-account toggle in Admin → Accounts → Edit an OpenAI OAuth account → "Basispoints outbound mode", off by default): when enabled, `/v1/responses` requests from OpenAI OAuth accounts go to `https://bps.openai.com/basispoints/api/responses` with basispoints identity headers (`x-basispoints-auth-mode: chatgpt`, etc.) instead of Codex identity headers, and are forced onto HTTP SSE. When disabled, behavior is identical to upstream.
 - Reasoning effort still tops out at `xhigh` (no `max`). The endpoint is undocumented; using it may violate OpenAI's terms and risk account suspension.
 
 See **[BASISPOINTS_MODE.md](BASISPOINTS_MODE.md)** (Chinese) for how to enable it, a behavior comparison, and the list of code changes.

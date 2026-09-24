@@ -22,7 +22,7 @@
 
 本仓库 fork 自 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api)，在上游基础上新增：
 
-- **Basispoints 出站模式**（账号级开关 `extra.openai_basispoints_mode`，默认关闭）：开启后 OpenAI OAuth 账号的 `/v1/responses` 请求改走 `https://bps.openai.com/basispoints/api/responses`，使用 basispoints 身份头（`x-basispoints-auth-mode: chatgpt` 等）替代 Codex 身份头，并强制走 HTTP SSE。关闭时与上游行为完全一致。
+- **Basispoints 出站模式**（后台 → 账号管理 → 编辑 OpenAI OAuth 账号 → 「Basispoints 出站模式」开关，默认关闭）：开启后 OpenAI OAuth 账号的 `/v1/responses` 请求改走 `https://bps.openai.com/basispoints/api/responses`，使用 basispoints 身份头（`x-basispoints-auth-mode: chatgpt` 等）替代 Codex 身份头，并强制走 HTTP SSE。关闭时与上游行为完全一致。
 - 推理强度上限仍为 `xhigh`（无 `max`）；该端点未公开，存在违反 OpenAI 服务条款和封号风险。
 
 开启方法、行为对照、代码改动清单见 **[BASISPOINTS_MODE.md](BASISPOINTS_MODE.md)**。
