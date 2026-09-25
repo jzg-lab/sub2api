@@ -18,6 +18,7 @@
 
 </div>
 
+> **关于本 fork**：本仓库 fork 自 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api)，与上游保持一致、不改源码。定制功能以独立插件形式开发（如 [jzg-lab/bps_sub_plugin](https://github.com/jzg-lab/bps_sub_plugin)）。之前内置的 basispoints 开关已归档到 `archive/basispoints-toggle` 分支。
 
 ## ⚠️ 重要提醒
 

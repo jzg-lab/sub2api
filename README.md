@@ -18,6 +18,8 @@ English | [中文](README_CN.md) | [日本語](README_JA.md)
 
 </div>
 
+> **About this fork**: this repository is a fork of [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) and tracks upstream without source changes. Custom features are developed as separate plugins (e.g. [jzg-lab/bps_sub_plugin](https://github.com/jzg-lab/bps_sub_plugin)). The earlier in-tree basispoints toggle is archived on the `archive/basispoints-toggle` branch.
+
 ## ⚠️ Important Notice
 
 Please read the following carefully before using this project:
